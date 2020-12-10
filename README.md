@@ -1,5 +1,7 @@
 # OpenEphys_SyncVideo
 
+by Laura Berkowitz and [Ryan Harvey](https://github.com/ryanharvey1)
+
 This repository includes a script to sync video/ephys recordings using PyZMQ and OpenCV in Python 3.8. 
 
 ![alt text](https://github.com/lolaBerkowitz/OpenEphys_SyncVideo/blob/main/recording_setup.PNG)
