@@ -50,29 +50,36 @@ def run_client():
         with context.socket(zmq.REQ) as socket:
             socket.RCVTIMEO = int(timeout * 1000)  # timeout in milliseconds
             socket.connect(url)
-
-            socket.send_string('StartRecord')
-            socket.recv_string() 
-
+            
+            # initialize lists for timestamps
             soft_ts = [] # video ts
             soft_ts.append(0)
             event_start = [] # event ts
             event_start.append(0)
             event_end = [] # event ts
             event_end.append(0)
+            
+            # send message to OE to start recordings
+            socket.send_string('StartRecord')
+            socket.recv_string() 
+            start = time.time() # measure time between start record and timestamp record
+            
             while(cap.isOpened()):
                 ret, frame = cap.read()
 
                 if ret==True:
-                    soft_ts.append(soft_ts[-1] + (1/30))  # estimated timestamp in seconds 
+                    # write frame
+                    out.write(frame)
+                    print(time.time() - start) 
+                    soft_ts.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)  # timestamp in seconds 
                     key = cv2.waitKey(1) & 0xFF # listens for key press every 1ms
                     
                     # To record events
                     if key == ord('s'): # start condition
-                        event_start.append(soft_ts[-1] + (1/30))
+                        event_start.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)
                         print('start timestamp recorded')
                     elif key == ord('e'): # end condition
-                        event_end.append(soft_ts[-1] + (1/30))
+                        event_end.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)
                         print('stop timestamp recorded')
 
                     # write frame
@@ -92,7 +99,8 @@ def run_client():
             # okay, recording is over so let's stop OE automatically.
             socket.send_string('StopRecord')
             socket.recv_string()
-
+            print(time.time() - start) 
+            
             # Finally, stop data acquisition; it might be a good idea to 
             # wait a little bit until all data have been written to hard drive
             time.sleep(5)
