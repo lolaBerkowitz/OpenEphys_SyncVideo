@@ -52,35 +52,29 @@ def run_client():
             socket.connect(url)
             
             # initialize lists for timestamps
-            soft_ts = [] # video ts
-            soft_ts.append(0)
-            event_start = [] # event ts
-            event_start.append(0)
-            event_end = [] # event ts
-            event_end.append(0)
-            keep_time = [] # time difference between start record and first timestamp
-            keep_time.append(0)
+            soft_ts = [0.0] # video ts
+            event_start = [0.0] # event ts
+            event_end = [0.0] # event ts
             # send message to OE to start recordings
             socket.send_string('StartRecord')
             socket.recv_string() 
             start = time.time() # measure time between start record and timestamp record
-            
+
             while(cap.isOpened()):
                 ret, frame = cap.read()
 
                 if ret==True:
                     # write frame
                     out.write(frame)
-                    keep_time.append(time.time()) 
-                    soft_ts.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)  # timestamp in seconds 
+                    soft_ts.append(time.time())  # timestamp floating point in UTC
                     key = cv2.waitKey(1) & 0xFF # listens for key press every 1ms
                     
                     # To record events
                     if key == ord('s'): # start condition
-                        event_start.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)
+                        event_start.append(time.time())
                         print('start timestamp recorded')
                     elif key == ord('e'): # end condition
-                        event_end.append(cap.get(cv2.CAP_PROP_POS_MSEC)*1000)
+                        event_end.append(time.time())
                         print('stop timestamp recorded')
 
                     # write frame
@@ -111,8 +105,7 @@ def run_client():
             ## Save timestamps
             pd.DataFrame(data=soft_ts, columns=["video_ts"]).to_csv('E:/open_ephys/data/'+dt_string+'_video_ts.csv')
             pd.DataFrame(data={'start': np.array(event_start), 'end': np.array(event_end)}).to_csv('E:/open_ephys/data/'+dt_string+'_events_ts.csv')
-            pd.DataFrame(data={'start_record': np.array(start), 'end_record': np.array(end)}).to_csv('E:/open_ephys/data/'+dt_string+'_record_ts.csv')
-            pd.DataFrame(data ={ 'keep_time': np.array(keep_time)}).to_csv('E:/open_ephys/data/'+dt_string+'_keepTime_ts.csv')
+            pd.DataFrame(data={'start_record': [np.array(start)], 'end_record': [np.array(end)]}).to_csv('E:/open_ephys/data/'+dt_string+'_record_ts.csv')
 
 if __name__ == '__main__':
     run_client()
