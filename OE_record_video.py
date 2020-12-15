@@ -90,22 +90,16 @@ def run_client():
             cap.release()
             out.release()
             cv2.destroyAllWindows() 
-
-            # okay, recording is over so let's stop OE automatically.
-            socket.send_string('StopRecord')
-            socket.recv_string()
             end = time.time()
-            
-            # Finally, stop data acquisition; it might be a good idea to 
-            # wait a little bit until all data have been written to hard drive
-            time.sleep(5)
-            socket.send_string('StopAcquisition')
-            socket.recv_string()
             
             ## Save timestamps
             pd.DataFrame(data=soft_ts, columns=["video_ts"]).to_csv('E:/open_ephys/data/'+dt_string+'_video_ts.csv')
             pd.DataFrame(data={'start': np.array(event_start), 'end': np.array(event_end)}).to_csv('E:/open_ephys/data/'+dt_string+'_events_ts.csv')
             pd.DataFrame(data={'start_record': [np.array(start)], 'end_record': [np.array(end)]}).to_csv('E:/open_ephys/data/'+dt_string+'_record_ts.csv')
-
+            
+            # okay, recording is over so let's stop OE automatically.
+            socket.send_string('StopRecord')
+            socket.recv_string()
+            
 if __name__ == '__main__':
     run_client()
